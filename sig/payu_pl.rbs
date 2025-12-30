@@ -1,4 +1,94 @@
 module PayuPl
   VERSION: String
   # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+
+  class Configuration
+    attr_accessor locale: Symbol
+    def initialize: () -> void
+  end
+
+  def self.config: () -> Configuration
+  def self.configure: () { (Configuration) -> void } -> void
+  def self.load_translations!: () -> void
+  def self.t: (Symbol | String, **untyped) -> String
+
+  class Error < StandardError
+  end
+
+  class ValidationError < Error
+    attr_reader errors: untyped
+    attr_reader input: untyped
+
+    def initialize: (errors: untyped, ?input: untyped, ?message: String) -> void
+  end
+
+  class NetworkError < Error
+    attr_reader original: untyped
+    def initialize: (?String message, ?original: untyped) -> void
+  end
+
+  class ResponseError < Error
+    attr_reader http_status: Integer
+    attr_reader correlation_id: String?
+    attr_reader raw_body: String?
+    attr_reader parsed_body: untyped
+
+    def initialize: (String message, http_status: Integer, ?correlation_id: String?, ?raw_body: String?, ?parsed_body: untyped) -> void
+  end
+
+  class ClientError < ResponseError
+  end
+
+  class UnauthorizedError < ClientError
+  end
+
+  class ForbiddenError < ClientError
+  end
+
+  class NotFoundError < ClientError
+  end
+
+  class RateLimitedError < ClientError
+  end
+
+  class ServerError < ResponseError
+  end
+
+  class Transport
+    def initialize: (base_url: String, access_token_provider: ^() -> String?, ?open_timeout: Integer, ?read_timeout: Integer) -> void
+    def request: (untyped method, String path, ?headers: Hash[String, String], ?json: untyped, ?form: Hash[untyped, untyped], ?authorize: bool) -> untyped
+  end
+
+  class Client
+    DEFAULT_PRODUCTION_BASE_URL: String
+    DEFAULT_SANDBOX_BASE_URL: String
+
+    attr_reader base_url: String
+    attr_reader client_id: String
+    attr_reader client_secret: String
+    attr_accessor access_token: String?
+
+    def initialize: (
+      client_id: String,
+      client_secret: String,
+      ?access_token: String?,
+      ?base_url: String?,
+      ?environment: Symbol,
+      ?open_timeout: Integer,
+      ?read_timeout: Integer
+    ) -> void
+
+    def oauth_token: (?grant_type: String) -> Hash[String, untyped]
+
+    def create_order: (untyped order_create_request) -> untyped
+    def retrieve_order: (untyped order_id) -> untyped
+    def capture_order: (untyped order_id, ?amount: untyped, ?currency_code: untyped) -> untyped
+    def cancel_order: (untyped order_id) -> untyped
+
+    def create_refund: (untyped order_id, description: String, ?amount: untyped, ?ext_refund_id: untyped) -> untyped
+    def list_refunds: (untyped order_id) -> untyped
+    def retrieve_refund: (untyped order_id, untyped refund_id) -> untyped
+
+    def retrieve_transactions: (untyped order_id) -> untyped
+  end
 end

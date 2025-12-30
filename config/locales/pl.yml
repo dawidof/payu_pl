@@ -1,0 +1,10 @@
+pl:
+  payu_pl:
+    validation:
+      max_length: "musi mieć maksymalnie %{max} znaków"
+      ip_address: "musi być poprawnym adresem IPv4 lub IPv6"
+      iso_4217: "musi być 3-literowym kodem ISO 4217"
+      numeric_string: "musi być ciągiem cyfr"
+      min_items: "musi zawierać co najmniej %{min} element(y)"
+      required_with_currency_code: "jest wymagane, gdy podano currency_code"
+      required_with_amount: "jest wymagane, gdy podano amount"
