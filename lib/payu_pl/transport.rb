@@ -136,9 +136,7 @@ module PayuPl
 
       if parts.length == 1
         preview = raw_body.to_s.strip
-        if preview.length > 300
-          preview = "#{preview.each_char.take(300).join}…"
-        end
+        preview = "#{preview.each_char.take(300).join}…" if preview.length > 300
         parts << preview unless preview.empty?
       end
 
