@@ -34,9 +34,9 @@ bundle install
 
 ```ruby
 client = PayuPl::Client.new(
-	client_id: ENV.fetch("PAYU_CLIENT_ID"),
-	client_secret: ENV.fetch("PAYU_CLIENT_SECRET"),
-	environment: :sandbox # or :production
+  client_id: ENV.fetch("PAYU_CLIENT_ID"),
+  client_secret: ENV.fetch("PAYU_CLIENT_SECRET"),
+  environment: :sandbox # or :production
 )
 ```
 
@@ -53,15 +53,15 @@ The token is stored on the client as `client.access_token` and used automaticall
 
 ```ruby
 payload = {
-	notifyUrl: "https://example.com/payu/notify",
-	customerIp: "127.0.0.1",
-	merchantPosId: ENV.fetch("PAYU_POS_ID"),
-	description: "RTV market",
-	currencyCode: "PLN",
-	totalAmount: "21000",
-	products: [
-		{ name: "Wireless Mouse", unitPrice: "21000", quantity: "1" }
-	]
+  notifyUrl: "https://example.com/payu/notify",
+  customerIp: "127.0.0.1",
+  merchantPosId: ENV.fetch("PAYU_POS_ID"),
+  description: "RTV market",
+  currencyCode: "PLN",
+  totalAmount: "21000",
+  products: [
+    { name: "Wireless Mouse", unitPrice: "21000", quantity: "1" }
+  ]
 }
 
 response = client.create_order(payload)

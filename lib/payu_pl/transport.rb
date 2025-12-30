@@ -112,7 +112,7 @@ module PayuPl
       return nil if body.nil? || body.empty?
 
       content_type = res["Content-Type"].to_s
-      if content_type.include?("application/json") || body.lstrip.start_with?("{", "[")
+      if content_type.include?("application/json") || body.match?(/\A\s*[\[{]/)
         JSON.parse(body)
       else
         body
@@ -136,7 +136,9 @@ module PayuPl
 
       if parts.length == 1
         preview = raw_body.to_s.strip
-        preview = "#{preview[0, 300]}…" if preview.length > 300
+        if preview.length > 300
+          preview = "#{preview.each_char.take(300).join}…"
+        end
         parts << preview unless preview.empty?
       end
 

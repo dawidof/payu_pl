@@ -1,14 +1,13 @@
 # frozen_string_literal: true
 
 require "dry/validation"
+require "ipaddr"
 
 module PayuPl
   module Contracts
     class OrderCreateContract < Dry::Validation::Contract
       IPV4_SEGMENT = "(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)"
       IPV4_REGEX = /\A#{IPV4_SEGMENT}(?:\.#{IPV4_SEGMENT}){3}\z/.freeze
-      # Simplified IPv6 pattern; API accepts full IPv6 variants.
-      IPV6_REGEX = /\A[0-9a-fA-F:]+\z/.freeze
 
       params do
         optional(:continueUrl).filled(:string)
@@ -46,9 +45,17 @@ module PayuPl
       end
 
       rule(:customerIp) do
-        ip = value
+        ip = value.to_s
 
-        key.failure(PayuPl.t(:ip_address)) unless IPV4_REGEX.match?(ip) || IPV6_REGEX.match?(ip)
+        ipv4 = IPV4_REGEX.match?(ip)
+        ipv6 = begin
+          addr = IPAddr.new(ip)
+          addr.ipv6? && ip.include?(":")
+        rescue IPAddr::InvalidAddressError
+          false
+        end
+
+        key.failure(PayuPl.t(:ip_address)) unless ipv4 || ipv6
       end
 
       rule(:description) do
