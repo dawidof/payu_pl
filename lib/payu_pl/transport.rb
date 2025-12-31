@@ -15,7 +15,7 @@ module PayuPl
       validate!
     end
 
-    def request(method, path, headers: {}, json: :__no_json_argument_given, form: nil, authorize: true)
+    def request(method, path, headers: {}, json: :__no_json_argument_given, form: nil, authorize: true, return_headers: false)
       uri = URI.join(@base_url, path)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = (uri.scheme == "https")
@@ -66,7 +66,7 @@ module PayuPl
         raise NetworkError.new("Network failure", original: e)
       end
 
-      handle_response(res)
+      handle_response(res, return_headers: return_headers)
     end
 
     private
@@ -78,13 +78,21 @@ module PayuPl
       raise ArgumentError, "base_url is invalid"
     end
 
-    def handle_response(res)
+    def handle_response(res, return_headers: false)
       http_status = res.code.to_i
       correlation_id = res["Correlation-Id"] || res["correlation-id"]
       raw_body = res.body
       parsed = parse_body(res)
 
-      return parsed if http_status >= 200 && http_status < 400
+      if http_status >= 200 && http_status < 400
+        return parsed unless return_headers
+
+        return {
+          body: parsed,
+          headers: extract_headers(res),
+          http_status: http_status
+        }
+      end
 
       message = build_error_message(http_status, parsed, raw_body)
 
@@ -105,6 +113,14 @@ module PayuPl
         raw_body: raw_body,
         parsed_body: parsed
       )
+    end
+
+    def extract_headers(res)
+      return {} unless res.respond_to?(:each_header)
+
+      headers = {}
+      res.each_header { |k, v| headers[k.to_s.downcase] = v }
+      headers
     end
 
     def parse_body(res)

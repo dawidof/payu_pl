@@ -73,6 +73,25 @@ module PayuPl
       Refunds::Retrieve.new(client: self).call(order_id, refund_id)
     end
 
+    # Shops
+    def retrieve_shop_data(shop_id)
+      Shops::Retrieve.new(client: self).call(shop_id)
+    end
+
+    # Payouts
+    def create_payout(payout_request)
+      Payouts::Create.new(client: self).call(payout_request)
+    end
+
+    def retrieve_payout(payout_id)
+      Payouts::Retrieve.new(client: self).call(payout_id)
+    end
+
+    # Statements
+    def retrieve_statement(report_id)
+      Statements::Retrieve.new(client: self).call(report_id)
+    end
+
     private
 
     def validate!

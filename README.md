@@ -14,6 +14,12 @@ This gem focuses on the standard payment flow endpoints:
 - Refunds
 - Transaction retrieve
 
+Additional supported areas:
+
+- Retrieve Shop Data
+- Payouts
+- Statements
+
 ## Installation
 
 Add to your Gemfile:
@@ -104,6 +110,77 @@ client.retrieve_refund(order_id, "5000000142")
 
 ```ruby
 client.retrieve_transactions(order_id)
+```
+
+### Retrieve shop data
+
+```ruby
+client.retrieve_shop_data("SHOP_ID")
+```
+
+### Payouts
+
+PayU supports multiple payout request schemas (Standard Payout, Bank Account Payout, Card Payout, Payout for Marketplace, FxPayout).
+This client sends the JSON payload as-is, so your request must match one of the schemas from PayU docs.
+
+Note: Payouts are a permissioned product in PayU. If your POS/shop is not enabled for payouts (common in sandbox or without the right agreement), PayU may respond with HTTP `403` (e.g. `ERROR_VALUE_INVALID` / "Permission denied for given action").
+
+```ruby
+# Standard Payout
+standard_payout = {
+  shopId: "1a2B3Cx",
+  payout: {
+    extPayoutId: "payout-123",
+    amount: 10_000,
+    description: "Payout"
+  }
+}
+
+# Bank Account Payout
+bank_account_payout = {
+  shopId: "1a2B3Cx",
+  payout: { extPayoutId: "payout-124", amount: 10_000, description: "Payout" },
+  account: { accountNumber: "PL61109010140000071219812874" },
+  customerAddress: { name: "Jane Doe" }
+}
+
+# Card Payout (use either cardToken or card)
+card_payout = {
+  shopId: "1a2B3Cx",
+  payout: { extPayoutId: "payout-125", amount: 10_000, description: "Payout" },
+  payee: { extCustomerId: "customer-id-1", accountCreationDate: "2025-03-27T00:00:00.000Z", email: "email@email.com" },
+  customerAddress: { name: "Jane Doe" },
+  cardToken: "TOKC_..."
+}
+
+# Payout for Marketplace
+marketplace_payout = {
+  shopId: "1a2B3Cx",
+  account: { extCustomerId: "submerchant1" },
+  payout: { extPayoutId: "payout-126", amount: 10_000, currencyCode: "PLN", description: "Payout" }
+}
+
+# FxPayout
+fx_payout = {
+  shopId: "1a2B3Cx",
+  account: { extCustomerId: "submerchant1" },
+  payout: { extPayoutId: "payout-127", amount: 10_000, currencyCode: "PLN", description: "Payout" },
+  fxData: { partnerId: "...", currencyCode: "EUR", amount: 2500, rate: 0.25, tableId: "2055" }
+}
+
+client.create_payout(standard_payout)
+client.retrieve_payout("PAYOUT_ID")
+```
+
+### Statements
+
+This endpoint returns binary data and includes filename metadata from `Content-Disposition`.
+
+```ruby
+statement = client.retrieve_statement("REPORT_ID")
+# => { data: "...", filename: "...", content_type: "...", http_status: 200 }
+
+File.binwrite(statement.fetch(:filename), statement.fetch(:data))
 ```
 
 ## Errors and validation
