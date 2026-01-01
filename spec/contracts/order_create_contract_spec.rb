@@ -33,4 +33,20 @@ RSpec.describe PayuPl::Contracts::OrderCreateContract do
     result = described_class.new.call(base_payload.merge(customerIp: "1"))
     expect(result.errors.to_h.fetch(:customerIp)).to include("must be a valid IPv4 or IPv6 address")
   end
+
+  it "accepts validityTime as numeric string" do
+    result = described_class.new.call(base_payload.merge(validityTime: "100000"))
+    expect(result).to be_success
+  end
+
+  it "rejects validityTime when not numeric string" do
+    result = described_class.new.call(base_payload.merge(validityTime: "10.00"))
+    expect(result.errors.to_h.fetch(:validityTime)).to include("must be a numeric string")
+  end
+
+  it "accepts product virtual boolean" do
+    payload = base_payload.merge(products: [{ name: "Mouse", unitPrice: "21000", quantity: "1", virtual: true }])
+    result = described_class.new.call(payload)
+    expect(result).to be_success
+  end
 end

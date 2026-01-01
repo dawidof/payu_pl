@@ -25,10 +25,13 @@ module PayuPl
         required(:currencyCode).filled(:string)
         required(:totalAmount).filled(:string)
 
+        optional(:validityTime).filled(:string)
+
         required(:products).array(:hash) do
           required(:name).filled(:string)
           required(:unitPrice).filled(:string)
           required(:quantity).filled(:string)
+          optional(:virtual).filled(:bool)
         end
       end
 
@@ -93,6 +96,13 @@ module PayuPl
 
       rule(:totalAmount) do
         # API uses a string containing minor units
+        key.failure(PayuPl.t(:numeric_string)) unless value.match?(/\A\d+\z/)
+      end
+
+      rule(:validityTime) do
+        next if value.nil?
+
+        # OpenAPI: string containing seconds
         key.failure(PayuPl.t(:numeric_string)) unless value.match?(/\A\d+\z/)
       end
 

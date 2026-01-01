@@ -1,6 +1,7 @@
 en:
   payu_pl:
     validation:
+      hash: "must be a hash"
       max_length: "must be at most %{max} characters"
       ip_address: "must be a valid IPv4 or IPv6 address"
       iso_4217: "must be a 3-letter ISO 4217 code"

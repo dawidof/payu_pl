@@ -7,6 +7,9 @@
 /spec/reports/
 /tmp/
 
+# built gem artifacts
+*.gem
+
 # Gem libraries typically should not commit Gemfile.lock
 Gemfile.lock
 

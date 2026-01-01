@@ -56,7 +56,7 @@ module PayuPl
 
   class Transport
     def initialize: (base_url: String, access_token_provider: ^() -> String?, ?open_timeout: Integer, ?read_timeout: Integer) -> void
-    def request: (untyped method, String path, ?headers: Hash[String, String], ?json: untyped, ?form: Hash[untyped, untyped], ?authorize: bool) -> untyped
+    def request: (untyped method, String path, ?headers: Hash[String, String], ?json: untyped, ?form: Hash[untyped, untyped]?, ?authorize: bool, ?return_headers: bool) -> untyped
   end
 
   class Client
@@ -90,5 +90,12 @@ module PayuPl
     def retrieve_refund: (untyped order_id, untyped refund_id) -> untyped
 
     def retrieve_transactions: (untyped order_id) -> untyped
+
+    def retrieve_shop_data: (untyped shop_id) -> untyped
+
+    def create_payout: (untyped payout_request) -> untyped
+    def retrieve_payout: (untyped payout_id) -> untyped
+
+    def retrieve_statement: (untyped report_id) -> untyped
   end
 end
