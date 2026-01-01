@@ -180,7 +180,8 @@ This endpoint returns binary data and includes filename metadata from `Content-D
 statement = client.retrieve_statement("REPORT_ID")
 # => { data: "...", filename: "...", content_type: "...", http_status: 200 }
 
-File.binwrite(statement.fetch(:filename), statement.fetch(:data))
+safe_filename = File.basename(statement.fetch(:filename)).gsub(/[^0-9A-Za-z.\-]/, "_")
+File.binwrite(safe_filename, statement.fetch(:data))
 ```
 
 ## Errors and validation
