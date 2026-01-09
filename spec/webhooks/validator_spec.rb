@@ -72,7 +72,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
         signature = OpenSSL::HMAC.hexdigest("sha256", second_key, payload_json)
         header = "signature=#{signature};algorithm=SHA256"
         request = create_mock_request(payload_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         expect { validator.verify_signature! }.not_to raise_error
       end
@@ -80,7 +80,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
       it "raises error for incorrect signature" do
         header = "signature=invalid_signature;algorithm=SHA256"
         request = create_mock_request(payload_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         expect { validator.verify_signature! }.to raise_error(/Signature verification failed/)
       end
@@ -91,7 +91,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
         signature = Digest::MD5.hexdigest(payload_json + second_key)
         header = "signature=#{signature};algorithm=MD5"
         request = create_mock_request(payload_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         expect { validator.verify_signature! }.not_to raise_error
       end
@@ -100,7 +100,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
         signature = Digest::MD5.hexdigest(second_key + payload_json)
         header = "signature=#{signature};algorithm=MD5"
         request = create_mock_request(payload_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         expect { validator.verify_signature! }.not_to raise_error
       end
@@ -108,7 +108,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
       it "raises error for incorrect MD5 signature" do
         header = "signature=invalid_md5_signature;algorithm=MD5"
         request = create_mock_request(payload_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         expect { validator.verify_signature! }.to raise_error(/Signature verification failed/)
       end
@@ -119,7 +119,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
         signature = OpenSSL::HMAC.hexdigest("sha256", second_key, payload_json)
         header = "signature=#{signature}"
         request = create_mock_request(payload_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         expect { validator.verify_signature! }.not_to raise_error
       end
@@ -128,7 +128,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
     it "raises error when signature header is missing" do
       request = create_mock_request(payload_json, nil)
       validator = described_class.new(request, second_key: second_key)
-      
+
       expect { validator.verify_signature! }.to raise_error("Missing OpenPayU signature header")
     end
   end
@@ -137,7 +137,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
     it "parses valid JSON payload" do
       request = create_mock_request(payload_json, nil)
       validator = described_class.new(request, second_key: second_key)
-      
+
       result = validator.parse_payload
       expect(result).to be_a(Hash)
       expect(result["order"]["orderId"]).to eq("WZHF5FFDRJ140731GUEST000P01")
@@ -147,10 +147,10 @@ RSpec.describe PayuPl::Webhooks::Validator do
     it "allows reading body multiple times" do
       request = create_mock_request(payload_json, nil)
       validator = described_class.new(request, second_key: second_key)
-      
+
       first_parse = validator.parse_payload
       second_parse = validator.parse_payload
-      
+
       expect(first_parse).to eq(second_parse)
     end
   end
@@ -161,10 +161,10 @@ RSpec.describe PayuPl::Webhooks::Validator do
         signature = OpenSSL::HMAC.hexdigest("sha256", second_key, payload_json)
         header = "signature=#{signature};algorithm=SHA256"
         request = create_mock_request(payload_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         result = validator.validate_and_parse
-        
+
         expect(result).to be_success
         expect(result.failure?).to be false
         expect(result.data).to be_a(Hash)
@@ -177,10 +177,10 @@ RSpec.describe PayuPl::Webhooks::Validator do
       it "returns failure result with error message" do
         header = "signature=invalid;algorithm=SHA256"
         request = create_mock_request(payload_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         result = validator.validate_and_parse
-        
+
         expect(result).to be_failure
         expect(result.success?).to be false
         expect(result.error).to include("Signature verification failed")
@@ -193,7 +193,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
         request = create_mock_request(payload_json, nil)
         validator = described_class.new(request, second_key: second_key)
         result = validator.validate_and_parse
-        
+
         expect(result).to be_failure
         expect(result.error).to eq("Missing OpenPayU signature header")
       end
@@ -205,10 +205,10 @@ RSpec.describe PayuPl::Webhooks::Validator do
         signature = OpenSSL::HMAC.hexdigest("sha256", second_key, invalid_json)
         header = "signature=#{signature};algorithm=SHA256"
         request = create_mock_request(invalid_json, header)
-        
+
         validator = described_class.new(request, second_key: second_key)
         result = validator.validate_and_parse
-        
+
         expect(result).to be_failure
         expect(result.error).not_to be_nil
       end
@@ -228,10 +228,10 @@ RSpec.describe PayuPl::Webhooks::Validator do
       signature = OpenSSL::HMAC.hexdigest("sha256", second_key, payload_json)
       header = "signature=#{signature};algorithm=SHA256"
       request = create_mock_request(payload_json, header)
-      
+
       validator = described_class.new(request, second_key: second_key, logger: logger)
       validator.validate_and_parse
-      
+
       expect(logger).to have_received(:info).at_least(:once)
     end
 
@@ -239,7 +239,7 @@ RSpec.describe PayuPl::Webhooks::Validator do
       signature = OpenSSL::HMAC.hexdigest("sha256", second_key, payload_json)
       header = "signature=#{signature};algorithm=SHA256"
       request = create_mock_request(payload_json, header)
-      
+
       validator = described_class.new(request, second_key: second_key, logger: nil)
       expect { validator.validate_and_parse }.not_to raise_error
     end

@@ -7,7 +7,7 @@ RSpec.describe PayuPl::Webhooks::Result do
     it "creates a successful result with data" do
       data = { order_id: "123" }
       result = described_class.success(data)
-      
+
       expect(result).to be_success
       expect(result.failure?).to be false
       expect(result.data).to eq(data)
@@ -19,7 +19,7 @@ RSpec.describe PayuPl::Webhooks::Result do
     it "creates a failed result with error" do
       error = "Something went wrong"
       result = described_class.failure(error)
-      
+
       expect(result).to be_failure
       expect(result.success?).to be false
       expect(result.error).to eq(error)

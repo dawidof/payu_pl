@@ -17,7 +17,7 @@ module Webhooks
     def create
       # Validate webhook signature and parse payload
       result = PayuPl::Webhooks::Validator.new(request, logger: Rails.logger).validate_and_parse
-      
+
       if result.failure?
         Rails.logger.error("PayU webhook validation failed: #{result.error}")
         return head :bad_request
@@ -25,22 +25,20 @@ module Webhooks
 
       # Extract webhook data
       payload = result.data
-      order_id = payload.dig('order', 'orderId')
-      status = payload.dig('order', 'status')
-      event_id = payload['eventId'] || "#{order_id}_#{status}"
-      
+      order_id = payload.dig("order", "orderId")
+      status = payload.dig("order", "status")
+      payload["eventId"] || "#{order_id}_#{status}"
+
       # Format amount (PayU sends in minor units: 2900 = 29.00 PLN)
-      total_amount = payload.dig('order', 'totalAmount').to_i
-      currency = payload.dig('order', 'currencyCode')
-      formatted_amount = "%.2f" % (total_amount / 100.0)
-      
+      total_amount = payload.dig("order", "totalAmount").to_i
+      currency = payload.dig("order", "currencyCode")
+      formatted_amount = format("%.2f", total_amount / 100.0)
+
       Rails.logger.info("PayU webhook received - Order: #{order_id}, Status: #{status}")
       Rails.logger.info("Amount: #{formatted_amount} #{currency}")
-      
+
       # Optional: Log PayU processing time for monitoring
-      if request.headers['PayU-Processing-Time']
-        Rails.logger.info("PayU processing time: #{request.headers['PayU-Processing-Time']}ms")
-      end
+      Rails.logger.info("PayU processing time: #{request.headers["PayU-Processing-Time"]}ms") if request.headers["PayU-Processing-Time"]
 
       # Check for duplicate events (optional but recommended)
       # You'll need a WebhookEvent model or similar to track processed events
@@ -59,7 +57,7 @@ module Webhooks
 
       # Process the webhook asynchronously (recommended)
       # PayuWebhookJob.perform_async(order_id, status, payload)
-      
+
       # Or process synchronously (not recommended for production)
       # process_webhook(order_id, status, payload)
 
@@ -68,32 +66,32 @@ module Webhooks
       # Log unexpected errors
       Rails.logger.error("PayU webhook processing error: #{e.class} - #{e.message}")
       Rails.logger.error(e.backtrace.first(5).join("\n"))
-      
+
       # Return 500 so PayU will retry
       head :internal_server_error
     end
 
     private
 
-    def process_webhook(order_id, status, payload)
+    def process_webhook(order_id, status, _payload)
       # Your business logic here
       # For example:
       # - Update order status in your database
       # - Send confirmation emails
       # - Trigger fulfillment processes
       # - etc.
-      
+
       case status
-      when 'PENDING'
+      when "PENDING"
         Rails.logger.info("Order #{order_id} is pending payment")
-      when 'WAITING_FOR_CONFIRMATION'
+      when "WAITING_FOR_CONFIRMATION"
         Rails.logger.info("Order #{order_id} is waiting for manual capture")
         # This status appears when auto-receive is disabled
         # You need to manually capture or cancel the order
-      when 'COMPLETED'
+      when "COMPLETED"
         Rails.logger.info("Order #{order_id} completed successfully")
         # Update your order status, trigger fulfillment, etc.
-      when 'CANCELED'
+      when "CANCELED"
         Rails.logger.info("Order #{order_id} was canceled")
         # Handle cancellation
       else
