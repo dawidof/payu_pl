@@ -112,6 +112,155 @@ client.retrieve_refund(order_id, "5000000142")
 client.retrieve_transactions(order_id)
 ```
 
+### Webhook validation
+
+PayU sends webhook notifications when order status changes. This gem provides a validator to verify webhook signatures and parse payloads.
+
+#### Basic usage in Rails
+
+```ruby
+# config/routes.rb
+post '/webhooks/payu', to: 'webhooks/payu#create'
+
+# app/controllers/webhooks/payu_controller.rb
+class Webhooks::PayuController < ApplicationController
+  skip_before_action :verify_authenticity_token
+
+  def create
+    result = PayuPl::Webhooks::Validator.new(request).validate_and_parse
+    
+    if result.failure?
+      Rails.logger.error("PayU webhook validation failed: #{result.error}")
+      return head :bad_request
+    end
+
+    payload = result.data
+    order_id = payload.dig('order', 'orderId')
+    status = payload.dig('order', 'status')
+    
+    # Process the webhook...
+    # (check for duplicates, enqueue background job, etc.)
+    
+    head :ok
+  end
+end
+```
+
+#### Configuration
+
+Set your PayU second key (MD5 key) in one of three ways:
+
+```ruby
+# 1. Via initializer (recommended)
+# config/initializers/payu.rb
+PayuPl.configure do |config|
+  config.second_key = ENV.fetch('PAYU_SECOND_KEY')
+end
+
+# 2. Via ENV variable (automatic fallback)
+ENV['PAYU_SECOND_KEY'] = 'your_second_key'
+
+# 3. Pass directly to validator
+validator = PayuPl::Webhooks::Validator.new(request, second_key: 'custom_key')
+```
+
+#### With custom logger
+
+```ruby
+logger = Logger.new(STDOUT)
+validator = PayuPl::Webhooks::Validator.new(request, logger: logger)
+result = validator.validate_and_parse
+```
+
+#### Validation only (without parsing)
+
+```ruby
+validator = PayuPl::Webhooks::Validator.new(request)
+
+begin
+  validator.verify_signature!
+  # Signature is valid
+rescue => e
+  # Signature validation failed
+  Rails.logger.error("Invalid signature: #{e.message}")
+end
+```
+
+#### Result object
+
+The validator returns a `PayuPl::Webhooks::Result` object:
+
+```ruby
+result = validator.validate_and_parse
+
+if result.success?
+  payload = result.data
+  # Access webhook data
+  order_id = payload.dig('order', 'orderId')
+  status = payload.dig('order', 'status')
+  
+  # Convert amount from minor units (2900 = 29.00 PLN)
+  total_amount = payload.dig('order', 'totalAmount').to_i / 100.0
+  currency = payload.dig('order', 'currencyCode')
+else
+  error_message = result.error
+  # Handle validation error
+end
+```
+
+#### Signature algorithms
+
+PayU supports multiple signature algorithms (MD5, SHA1, SHA256, SHA384, SHA512). The validator automatically detects the algorithm from the webhook header and verifies accordingly.
+
+For MD5, PayU may use either `MD5(body + key)` or `MD5(key + body)`. The validator checks both variants automatically.
+
+#### Important: Webhook Best Practices
+
+1. **Always return 200 OK** - After signature validation, return 200 even if processing fails
+2. **Handle duplicates** - PayU retries up to 20 times if you don't return 200
+3. **Process asynchronously** - Store webhook and process in background job
+4. **IP Whitelisting** (optional) - Allow PayU IPs:
+   - Production: `185.68.12.10-12`, `185.68.12.26-28`
+   - Sandbox: `185.68.14.10-12`, `185.68.14.26-28`
+
+See `examples/WEBHOOK_GUIDE.md` for comprehensive integration guide.
+
+#### Non-Rails frameworks
+
+The validator works with any Rack-compatible request object:
+
+```ruby
+# Sinatra
+post '/webhooks/payu' do
+  result = PayuPl::Webhooks::Validator.new(request).validate_and_parse
+  
+  if result.success?
+    # Process webhook
+    status 200
+  else
+    status 400
+  end
+end
+
+# Hanami
+module Web::Controllers::Webhooks
+  class Payu
+    include Web::Action
+
+    def call(params)
+      result = PayuPl::Webhooks::Validator.new(request).validate_and_parse
+      
+      if result.success?
+        # Process webhook
+        self.status = 200
+      else
+        self.status = 400
+      end
+    end
+  end
+end
+```
+
 ### Retrieve shop data
 
 ```ruby
