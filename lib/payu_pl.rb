@@ -34,5 +34,8 @@ require_relative "payu_pl/payouts/retrieve"
 require_relative "payu_pl/statements/retrieve"
 require_relative "payu_pl/client"
 
+require_relative "payu_pl/webhooks/result"
+require_relative "payu_pl/webhooks/validator"
+
 module PayuPl
 end

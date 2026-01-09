@@ -4,10 +4,11 @@ require "i18n"
 
 module PayuPl
   class Configuration
-    attr_accessor :locale
+    attr_accessor :locale, :second_key
 
     def initialize
       @locale = :en
+      @second_key = nil
     end
   end
 
